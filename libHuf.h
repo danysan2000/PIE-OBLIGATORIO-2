@@ -3,13 +3,7 @@
 
 */
 
-
-typedef struct Simbolo 
-{
-	unsigned char valor;
-	int nbits;
-	unsigned int codigo;
-} simbolo;
+typedef struct Simbolo simbolo;
 
 
 typedef enum codigo error

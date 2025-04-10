@@ -6,8 +6,14 @@
 #include <libHuf.h>
 
 
-simbolo  *tablaCod;
+struct Simbolo
+{
+	unsigned char valor;
+	int nbits;
+	unsigned int codigo;
+};
 
+simbolo  *tablaCod;
 /* Prototitpos */
 /* funciones a implementar */
 CodigoError leertablacodificacion txt(FILE *fpTdC, simbolo** tablaCod, int* nbS); /* <---???? simbolo ** */
