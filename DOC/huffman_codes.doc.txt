@@ -1,0 +1,59 @@
+The Huffman coding algorithm is a lossless data compression technique that assigns variable-length codes to input characters based on their frequencies. Characters that appear more frequently are assigned shorter codes, while less frequent characters get longer codes. This method was developed by David A. Huffman in 1952.
+How Huffman Coding Works
+
+    Calculate Frequencies: Count how often each character appears in the input.
+    Build a Priority Queue (Min-Heap): Create a min-heap where each node represents a character and its frequency.
+    Construct the Huffman Tree:
+        Extract the two nodes with the smallest frequencies.
+        Merge them into a new node with a frequency equal to the sum of the two.
+        Reinsert the new node into the heap.
+        Repeat until only one node (the root) remains.
+    Assign Codes:
+        Traverse the tree, assigning 0 for left edges and 1 for right edges.
+        The path from the root to a leaf gives the Huffman code for that character.
+    Encode the Data: Replace each character in the input with its Huffman code.
+    Compress & Store: Save the Huffman tree (for decoding) and the encoded bitstream.
+
+Example
+
+Input: "abracadabra"
+Frequency Table:
+    a: 5
+    b: 2
+    r: 2
+    c: 1
+    d: 1
+
+Huffman Tree Construction:
+    Combine c (1) + d (1) → [cd] (2)
+    Combine b (2) + r (2) → [br] (4)
+    Combine [cd] (2) + [br] (4) → [cdbr] (6)
+    Combine a (5) + [cdbr] (6) → [acdbr] (11)
+
+Huffman Codes (example, may vary based on tree structure):
+    a: 0
+    b: 110
+    r: 111
+    c: 100
+    d: 101
+
+Encoded Output:
+"abracadabra" → 0 110 111 0 100 0 101 0 110 111 0
+(Total bits: 1×5 + 3×2 + 3×2 + 3×1 + 3×1 = 5 + 6 + 6 + 3 + 3 = 23 bits vs. original 11×8 = 88 bits in ASCII)
+Advantages
+
+✅ Optimal Prefix Codes (no code is a prefix of another).
+✅ Efficient for skewed distributions (better than fixed-length codes).
+Disadvantages
+
+❌ Requires storing the Huffman tree (overhead for small inputs).
+❌ Not ideal for dynamic or real-time data (requires two passes).
+Applications
+
+    ZIP, GZIP, PNG, JPEG (combined with other compression methods).
+
+    Telecommunication systems (for efficient data transmission).
+
+Would you like a Python implementation? 🚀
+New chat
+

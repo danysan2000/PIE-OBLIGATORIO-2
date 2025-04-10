@@ -9,7 +9,7 @@ typedef struct Simbolo
 	unsigned char valor;
 	int nbits;
 	unsigned int codigo;
-}simbolo;
+} simbolo;
 
 
 typedef enum codigo error
