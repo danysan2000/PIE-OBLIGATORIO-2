@@ -14,6 +14,6 @@ typedef enum codigo_error
 	ERRORESCRITURA = 3,
 	CODIGOMUYLARGO = 4,
 	ERRORMEMORIA = 5,
-}CodigoError ;
+} CodigoError ;
 
 
