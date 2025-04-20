@@ -8,6 +8,14 @@ MOTIVO:
     ES PARA RESPETAR LA PROGRAMACION MODULAR, UNA FUNCION NO ES USADA DENTRO DE OTRA FUNCION.
     PARA QUE EL LINKEDITOR SOLO TOME LA FUNCION QUE SE USA Y NO CARGUE TODAS LAS FUNCIONES.
     ES EL OBJETIVO DE TODA LIBRERIA QUE SE CARGUE LO QUE SE NECESITA.
+
+-----------------------------------------------------------------------
+NOTA IMPORTANTE: como esta libreria ("") es usada en el OBLIGATORIO 2 Y 3 
+ESTARA EN LINK CON LOS OTROS DIRECTORIOS.
+Sobre la entrega y correccion: 
+      No implemente correctamente la validacion de los argumentos de la funciones,
+	  Gregori me manifesto que hice una parte pero incompleta.
+	  CORRIGO ESA SITUACION.
 */
 
 #include <stdio.h>
@@ -44,7 +52,7 @@ int base,exp;
 
 /* --------------FIN FUNCIONES AUXILIARES ----- */
 
-#define rotoLeft(a , b)   ( a <<(b) )  
+#define rotoLeft(a , b)  ( a <<(b) )  
 #define rotoRight(a , b)  ( a >>(b) ) 
 
 

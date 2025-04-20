@@ -6,14 +6,14 @@
 typedef struct Simbolo simbolo;
 
 
-typedef enum codigo error
+typedef enum codigo_error
 {
-	T ODO OK = 0,
-	ERROR LECT U RA = 1,
-	ARCHIV O IN EXIST EN T E = 2,
-	ERROR ESCRIT U RA = 3,
-	CODIGO M U Y LARGO = 4,
-	ERROR M EM ORIA = 5,
+	TODOOK = 0,
+	ERRORLECTURA = 1,
+	ARCHIVOINEXISTENTE = 2,
+	ERRORESCRITURA = 3,
+	CODIGOMUYLARGO = 4,
+	ERRORMEMORIA = 5,
 }CodigoError ;
 
 
