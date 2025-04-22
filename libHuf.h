@@ -1,10 +1,8 @@
 /*
   libHuf.h
-
 */
 
-typedef struct Simbolo simbolo;
-
+typedef struct Simbolo **SIMBOLO;
 
 typedef enum codigo_error
 {
