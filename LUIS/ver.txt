@@ -1,0 +1,3 @@
+Mensaje: ?Hola, mundo! ?
+N?mero: 42
+Coraz?n: ?
