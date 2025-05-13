@@ -29,7 +29,7 @@ CodigoError codificarConTabla(FILE *fpIn, FILE *fpOut, simbolo *tablaCod, int nb
 CodigoError leerArchivotxt(FILE* fpIn, unsigned char **Msj, int* nbM);
 CodigoError decodificarConTabla(FILE* fpIn, FILE* fpOut, simbolo *Tabla, int NbS);
 int indiceEnTabla(unsigned int codigo, int nbits, simbolo *tablaCod, int NbS);
-CodigoError salvarcodigos(simbolo *tablaCod, int NbS, FILE* out);
+CodigoError salvar_codigos(simbolo *tablaCod, int NbS, FILE* out);
 void liberarTabla();
 
 

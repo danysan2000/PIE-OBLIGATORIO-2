@@ -1,4 +1,5 @@
 cscope.*
+*.o
 *.k
 *.kk
 *.bak

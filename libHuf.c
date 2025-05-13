@@ -38,13 +38,16 @@ CodigoError leertablacodificaciontxt(FILE *fpTdC, simbolo **tablaCod, int* nbS)
 	int ix,err;
 
 	fscanf(fpTdC, "%d", nbS);
-	tablaCod = malloc( (sizeof(simbolo) * *nbS) );
+	*tablaCod = malloc( (sizeof(simbolo) * *nbS) );
 
-	if (tablaCod == NULL) return ERRORMEMORIA;
+	if (*tablaCod == NULL) return ERRORMEMORIA;
 	
 	for( ix=0; ix < *nbS ; ix++)
 	{
-		err=fscanf(fpTdC, "%x %d %x", (unsigned int*) &(tablaCod[ix]->valor) , &(tablaCod[ix]->nbits), &(tablaCod[ix]->codigo) );
+		err=fscanf(fpTdC, "%x %d %x",
+	(unsigned int*) &( (*tablaCod)[ix].valor),
+					&( (*tablaCod)[ix].nbits),
+					&( (*tablaCod)[ix].codigo) );
 		if( err == EOF ) return ERRORLECTURA;
 	}
 	return TODOOK;
@@ -80,9 +83,18 @@ int indiceEnTabla(unsigned int codigo, int nbits, simbolo *tablaCod, int NbS)
 }
 
 
-CodigoError salvarcodigos(simbolo *tablaCod, int NbS, FILE* out)
+CodigoError salvar_codigos(simbolo *TablaCod, int NbS, FILE* out)
 {
 	CodigoError ret = TODOOK;
+	int ix;
+	fprintf(out,"%03d\n",NbS);
+	for(ix=0; ix<NbS ; ix++)
+	{
+		fprintf( out , "%x %d %x\n", 
+				TablaCod[ix].valor,
+				TablaCod[ix].nbits,
+				TablaCod[ix].codigo );
+	}
 	return ret;
 }
 
