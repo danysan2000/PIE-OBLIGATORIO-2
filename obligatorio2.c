@@ -13,7 +13,7 @@ Programa principal "obligatorio2"
 #include <libHuf.h>
 
 
-int argumentos1(int , char **,char *,FILE **, FILE **, FILE **); /* procesa argumentos */
+CodigoError argumentos1(int , char **,char *,FILE **, FILE **, FILE **); /* procesa argumentos */
 
 
 int main(int argc , char **argv )
@@ -23,20 +23,29 @@ int main(int argc , char **argv )
 	FILE *fpOut = NULL;
 	FILE *fpTdC = NULL ;
 	char op;
-	int nbS;
+	int nbS, errArg, nbM;
+	unsigned char *Msj;
 	/* procesar argumentos */
-	if( argumentos1(argc , argv, &op, &fpIn, &fpOut, &fpTdC ) != TODOOK )
+	if( (errArg=argumentos1(argc , argv, &op, &fpIn, &fpOut, &fpTdC)) != TODOOK )
 	{
-		printf("Error en argumentos:\n\
-Use: obligatorio2 comando archivo1.[txt][cod] archivo2.[cod][txt] archivo3.[codigos]\n\
-donde comando : [C] archivo1.txt archivo2.cod\n\
-                [D] archivo1.cod archivo2.txt\n\
-                [T] archivo1.sal archivo2(seignora) archivo3.[codigos]\n\
-           o pueder ser  ^--- stdout\n");
+		printf("Error en argumentos:\n"
+                "    Use: obligatorio2 comando archivo1.[txt][cod] archivo2.[cod][txt] archivo3.[codigos]\n"
+                "            donde comando : [C] archivo1.txt archivo2.cod\n"
+                "                            [D] archivo1.cod archivo2.txt\n"
+                "                            [T] archivo1.sal archivo2(seignora) archivo3.[codigos]\n"
+                "                         o pueder ser  ^--- stdout\n");
 		exit(1);
 	}
 	switch ( op )
 	{
+		case 'C':
+			if ( codificarConTabla(  fpIn, fpOut, tablaCod, nbS) != TODOOK )
+				printf("Error en CODIFICAR\n");
+			break;
+		case 'D':
+			if ( decodificarConTabla( fpIn, fpOut, Tabla, NbS) != TODOOK )
+				printf("Error en DECODIFICAR\n");
+			break;
 		case 'T':
 			leertablacodificaciontxt(fpTdC, &TablaCod,  &nbS);
 			salvar_codigos(TablaCod, nbS,  fpOut);
@@ -49,21 +58,22 @@ return 0;
 }
 
 
-int argumentos1(int argc , char **argv, char *op, FILE **fpIn, FILE **fpOut, FILE **fpTdC )
+CodigoError argumentos1(int argc , char **argv, char *op, FILE **fpIn, FILE **fpOut, FILE **fpTdC )
 {
 	/* Analizo argumentos y abro archivos */
 	char fileCodigos[100], filetxt[100], filecodificado[100];
 
+	if(  argc < 5 ) return ERRORARGUMENTOS;
 	*op =  *argv[1];  /* comando */
-	if( (*op != 'C' && *op != 'D' && *op != 'T' )  || argc < 5 ) return ERRORARGUMENTOS;
+	if( *op != 'C' && *op != 'D' && *op != 'T' ) return ERRORARGUMENTOS;
 	strcpy( fileCodigos,argv[4]); /* file Codigos */
-	if (  (*fpTdC = fopen( fileCodigos,"r")) == NULL ) {return ARCHIVOINEXISTENTE; }
+	if (  (*fpTdC = fopen( fileCodigos,"r")) == NULL ) return ARCHIVOINEXISTENTE;
 	switch((int)*op)
 	{
 		case 'C':
 			strcpy( filetxt, argv[2]); /* file in "nombreArchivo.txt */
 			strcpy( filecodificado,argv[3]); /* file out"ArchivoCodificado */
-			*fpIn=fopen(filetxt, "r");
+			*fpIn=fopen(filetxt, "rb");
 			*fpOut=fopen(filecodificado,"w+");
 			if( *fpIn==NULL || *fpOut==NULL )
 			   	return ARCHIVOINEXISTENTE;
@@ -72,7 +82,7 @@ int argumentos1(int argc , char **argv, char *op, FILE **fpIn, FILE **fpOut, FIL
 			strcpy( filecodificado, argv[3]); /* file in "ArchivoCodificado */
 			strcpy( filetxt,argv[2]); /* file out "ArchivoDecodificado.txt */
 			*fpOut=fopen(filetxt,"w+");
-			*fpIn=fopen(filecodificado ,"r");
+			*fpIn=fopen(filecodificado ,"rb");
 			if( *fpOut == NULL || *fpIn == NULL )
 				return ARCHIVOINEXISTENTE ;
 			break;
@@ -94,5 +104,6 @@ int argumentos1(int argc , char **argv, char *op, FILE **fpIn, FILE **fpOut, FIL
 	
 	return TODOOK;
 }
+
 
 
