@@ -3,6 +3,7 @@
  *
 */
 #include <stdio.h>
+#include <stdalign.h>
 #include <libHuf.h>
 
 
@@ -50,12 +51,16 @@ CodigoError leertablacodificaciontxt(FILE *fpTdC, simbolo **tablaCod, int* nbS)
 CodigoError codificarConTabla(FILE *fpIn, FILE *fpOut, simbolo *tablaCod, int nbS)
 {
 	CodigoError ret = TODOOK;
-	unsinged char *msj
+
+	unsinged char *Msj, aux_char;
 	int nbM, curs_nbm, err;
+
 	int ix,ij;
-	unsigned char buff_work[500]; /* buff_work espacio de trabajo en memoria */
-	int *buf2; /* auxiliar de buff_work */
-	int curBit; /* cursor bit dentro del int */
+	alignas (int) unsigned char buff_work[500]; /* buff_work espacio de trabajo en memoria */
+	unsigned int *buf2; /* auxiliar de buff_work */
+	int curBit; /* cursor bit dentro del int : acumula los bit concatenados  */
+	unsigned int aux_codigo;  /* cargo aca el simbolo.codigo */
+	unsigned int aux_nbits;   /* cargo el simbolo.nbits */
 	unsigned int curs_buf; /* cursor buff_work */
 	typedef sturct {
 		int nbits;
@@ -77,14 +82,39 @@ CodigoError codificarConTabla(FILE *fpIn, FILE *fpOut, simbolo *tablaCod, int nb
 		maqtab[ij].codigo = tablaCod[ix].codigo;
 	}
 	/* Comienzo Codificacion. */
-	curs_buf = 0; /*indice que representa un pack de 4 bytes */
-	curs_nbm = 0;
+	curs_buf = 0; /* indice que representa un pack de 4 bytes */
+	curs_nbm = 0; /* indice de Msj */
+	buf2= ((int * )buff_work)+curs_buf ;   /* ahora buf2 apunta a 4 bytes de buff_work */
+	*buf2 = 0;
+	curBit = 0;
 	while( true )
 	{
-		buf2=(int * )buff_work+curs_buf;   /* ahora buf2 apunta a 4 bytes de buff_work */
-		*buf2 = 0;
-		curBit = 0;
-		
+
+		aux_char = Msj[ curs_nbm++ ];
+		aux_nbits =   maqtab[aux_char].nbits;
+		aux_codigo =  maqtab[aux_char].codigo;
+
+		if ( (curBit + aux_nbits ) > 32 ) /* problemas de bordes */
+		{
+			/* curBit podria  ser justo 32 ;; dejo aca preparado para seguir cargando buf2 */
+
+		}
+		else
+		{
+			*buf2 = concatena ( *buf2 , aux_codigo, aux_nbits );
+			curBit += aux_nbits;
+		}
+	
+
+		if( curs_buf > 124 ) /* grabar el buffer codificado al archivo de salida  */
+		{
+
+		}
+		if( curs_nbm  < nbM ) /* chequeando si se termina el buffer de entrada */
+		{
+			/* grabar el buffer de salida pendiente */
+
+		}
 	}
 
 	free(maqtab);
