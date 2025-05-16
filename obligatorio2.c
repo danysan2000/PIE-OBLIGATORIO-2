@@ -23,8 +23,7 @@ int main(int argc , char **argv )
 	FILE *fpOut = NULL;
 	FILE *fpTdC = NULL ;
 	char op;
-	int nbS, errArg, nbM;
-	unsigned char *Msj;
+	int nbS, errArg;
 	/* procesar argumentos */
 	if( (errArg=argumentos1(argc , argv, &op, &fpIn, &fpOut, &fpTdC)) != TODOOK )
 	{
@@ -36,22 +35,22 @@ int main(int argc , char **argv )
                 "                         o pueder ser  ^--- stdout\n");
 		exit(1);
 	}
+
+	leertablacodificaciontxt(fpTdC, &TablaCod,  &nbS);
 	switch ( op )
 	{
 		case 'C':
-			if ( codificarConTabla(  fpIn, fpOut, tablaCod, nbS) != TODOOK )
+			if ( codificarConTabla(  fpIn, fpOut, TablaCod, nbS) != TODOOK )
 				printf("Error en CODIFICAR\n");
 			break;
 		case 'D':
-			if ( decodificarConTabla( fpIn, fpOut, Tabla, NbS) != TODOOK )
+			if ( decodificarConTabla( fpIn, fpOut, TablaCod, nbS) != TODOOK )
 				printf("Error en DECODIFICAR\n");
 			break;
 		case 'T':
-			leertablacodificaciontxt(fpTdC, &TablaCod,  &nbS);
+			/* leertablacodificaciontxt(fpTdC, &TablaCod,  &nbS); */
 			salvar_codigos(TablaCod, nbS,  fpOut);
 			break;
-		default:
-
 	}
 	
 return 0;
@@ -67,21 +66,21 @@ CodigoError argumentos1(int argc , char **argv, char *op, FILE **fpIn, FILE **fp
 	*op =  *argv[1];  /* comando */
 	if( *op != 'C' && *op != 'D' && *op != 'T' ) return ERRORARGUMENTOS;
 	strcpy( fileCodigos,argv[4]); /* file Codigos */
-	if (  (*fpTdC = fopen( fileCodigos,"r")) == NULL ) return ARCHIVOINEXISTENTE;
+	if (  (*fpTdC = fopen( fileCodigos,"rb")) == NULL ) return ARCHIVOINEXISTENTE;
 	switch((int)*op)
 	{
 		case 'C':
 			strcpy( filetxt, argv[2]); /* file in "nombreArchivo.txt */
 			strcpy( filecodificado,argv[3]); /* file out"ArchivoCodificado */
 			*fpIn=fopen(filetxt, "rb");
-			*fpOut=fopen(filecodificado,"w+");
+			*fpOut=fopen(filecodificado,"w+b");
 			if( *fpIn==NULL || *fpOut==NULL )
 			   	return ARCHIVOINEXISTENTE;
 			break;
 		case 'D':
 			strcpy( filecodificado, argv[3]); /* file in "ArchivoCodificado */
 			strcpy( filetxt,argv[2]); /* file out "ArchivoDecodificado.txt */
-			*fpOut=fopen(filetxt,"w+");
+			*fpOut=fopen(filetxt,"w+b");
 			*fpIn=fopen(filecodificado ,"rb");
 			if( *fpOut == NULL || *fpIn == NULL )
 				return ARCHIVOINEXISTENTE ;
@@ -92,7 +91,7 @@ CodigoError argumentos1(int argc , char **argv, char *op, FILE **fpIn, FILE **fp
 				*fpOut = stdout;
 			else
 			{
-				*fpOut=fopen(filetxt,"w+");
+				*fpOut=fopen(filetxt,"w+b");
 				if( *fpOut ==NULL )
 					return ARCHIVOINEXISTENTE ;
 			}
