@@ -182,16 +182,65 @@ CodigoError leerArchivotxt(FILE* fpIn, unsigned char **Msj, int* nbM)
 
 	 if( *nbM == 0 ) return ERRORLECTURA;
 	/* pido Memoria */
-	*Msj = malloc( *nbM );
+	 /* por un tema de compatibilidad con decodificarconTabla le sumo al buffer Msj para que sea
+	  * multiplo  de 4 sin cambiar nbM */
+	 if ( *nbM % 4 ) 
+		 /* no es multiplo */
+		 *Msj = calloc( (*nbM + 3 - (*nbM % 4)) , 1 );
+	 else
+		*Msj = calloc( *nbM, 1 );
 	/* asigno el contenido del archivo a Msj */
 	if (  fread( *Msj, 1, *nbM , fpIn) != *nbM ) return ERRORLECTURA;
 	return ret;
 }
 
-
 CodigoError decodificarConTabla(FILE* fpIn, FILE* fpOut, simbolo *Tabla, int NbS)
 {
 	CodigoError ret = TODOOK;
+	int curBit;
+	unsigned int aux_nbits, col, ren;
+	int ind_tab;
+	/* leer el archivo de entrada ; lo hago con leerarchivotxt igual son todos unsigned char  */
+	unsigned  char *MsjCod;
+	int nbM, err;
+	unsigned int ptr;
+	unsigned int aux_codigo,aux_codigo2;
+
+	if ( (err = leerArchivotxt( fpIn,  &MsjCod, &nbM) ) != TODOOK ) return err;
+	curBit = 0;
+	ptr = 1;
+	do
+	{
+		 aux_codigo  = to_big_endian( (unsigned int) *((unsigned int*)(MsjCod+ptr)) );
+		 aux_codigo2 = extraer( aux_codigo , 0, 31-curBit) << curBit;
+		/* ind_tab = indiceEnTabla( extraer( to_big_endian( (unsigned int) *((unsigned int*)(MsjCod+ptr)) ) , 0, 31-curBit), NULL  , Tabla, NbS); */
+		ind_tab = indiceEnTabla( aux_codigo2, NULL, Tabla, NbS);
+		if ( ind_tab < 0 ) /* ERROR no encontro el codigo */
+		{
+			ret = ERRORCODIGONOEXISTE;
+			break;
+		}
+		else
+		{
+			fprintf(fpOut, "%c", Tabla[ind_tab].valor );
+			fflush(fpOut);
+		}
+
+		aux_nbits = Tabla[ind_tab].nbits; /* tomo los nbits del codigo encontrado */
+		curBit += aux_nbits; /*  aux_nbits para el proximo codigo */
+
+/*		if ( curBit > 8 ) esto no es mas necesario */
+		/* calcular ptr y CurBit  */
+		/* ajustar col dependiendo si hay o no cambio de renglon */ 
+		col  =  ( curBit % 8);                   /* columna dentro del byte */
+		ren  =  ( curBit - col ) / 8 ;
+		if ( ren != 0 )
+		{
+			/* tengo que ajustar curbit a col */
+			curBit = col; 
+			ptr   += ren;           /* ptr como renglon es el indice de MsjCod */
+		}			
+	} while(  ptr < nbM-1 && ( ret == TODOOK ) );
 	return ret;
 }
 
@@ -199,11 +248,43 @@ CodigoError decodificarConTabla(FILE* fpIn, FILE* fpOut, simbolo *Tabla, int NbS
 /* por ahora no le encuentro sentido a esta funcion,
  * ya que nbits no lo tengo como dato sino lo tengo que buscar dentro de la tabla
  * comenzando de menor a mayor.
+ *
+ * PASO COMO PUNTERO nbits , para que la funcion me diga cuantos nbits tiene el codigo buscado 
+ * return: -1 si no lo encuentra.
  */
-int indiceEnTabla(unsigned int codigo, int nbits, simbolo *tablaCod, int NbS)
+/*
+ * funcion original 
+  int indiceEnTabla(unsigned int codigo, int *nbits, simbolo *tablaCod, int NbS)
+DAN int indiceEnTabla(unsigned int codigo, simbolo *tablaCod, int NbS)
+*/
+int indiceEnTabla(unsigned int codigo, int *nbits, simbolo *tablaCod, int NbS)
 {
-	int valret = 0;
-	/*  CodigoError ret = TODOOK; */
+	
+	int valret = -1;
+	int ix; /* auxiliares para loops */
+	unsigned int aux_codigo, aux_codigoTab;
+	int aux_nbits;
+	unsigned int mask; /* mascara para testear segun nbits con codigo */
+	/* primer intento busco en la tabla sin considerar el orden de los nbits pero comienzo por abajo */
+	ix= NbS-1;
+	aux_nbits = -1; /* inicio aux_nbits */
+	do 
+	{
+		/* leo el indice ix de la tabla */
+		aux_codigoTab = tablaCod[ix].codigo;
+		/* aux_valor  = tablaCod[ix].valor; */
+		/* armo la mascara para los nbits correspondientes */
+		if ( aux_nbits !=  tablaCod[ix].nbits )
+		{
+			aux_nbits   = tablaCod[ix].nbits;
+			mask        = crear_mascara( 31, 32-aux_nbits ); /* verificar  */
+			aux_codigo  = extraer( (codigo & mask ),32-aux_nbits , 31);
+
+		}
+		/* comparo con codigo */
+		 if( aux_codigoTab == aux_codigo ) 
+			valret = ix ; /* lo encontro */
+	} while( valret == -1  && ix--  );
 	return valret;
 }
 
@@ -230,7 +311,7 @@ void liberarTabla()
 }
 
 
-uint32_t to_big_endian(uint32_t value)
+uint32_t to_big_endian(uint32_t value) 
 {
     uint32_t result = 0;
     result |= (value & 0xFF000000) >> 24;  /* Byte 3 (MSB) -> Byte 0 */

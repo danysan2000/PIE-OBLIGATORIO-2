@@ -29,10 +29,8 @@ int main(int argc , char **argv )
 	{
 		printf("Error en argumentos:\n"
                 "    Use: obligatorio2 comando archivo1.[txt][cod] archivo2.[cod][txt] archivo3.[codigos]\n"
-                "            donde comando : [C] archivo1.txt archivo2.cod\n"
-                "                            [D] archivo1.cod archivo2.txt\n"
-                "                            [T] archivo1.sal archivo2(seignora) archivo3.[codigos]\n"
-                "                         o pueder ser  ^--- stdout\n");
+                "            donde comando : [C] [D] [T]\n"
+                "                            [T] archivo1.sal pueder ser -t stdout\n");
 		exit(1);
 	}
 
@@ -78,9 +76,12 @@ CodigoError argumentos1(int argc , char **argv, char *op, FILE **fpIn, FILE **fp
 			   	return ARCHIVOINEXISTENTE;
 			break;
 		case 'D':
-			strcpy( filecodificado, argv[3]); /* file in "ArchivoCodificado */
-			strcpy( filetxt,argv[2]); /* file out "ArchivoDecodificado.txt */
-			*fpOut=fopen(filetxt,"w+b");
+			strcpy( filecodificado, argv[2]); /* file in "ArchivoCodificado */
+			strcpy( filetxt,argv[3]); /* file out "ArchivoDecodificado.txt */
+			if( !strcmp( filetxt, "stdout") )
+				*fpOut = stdout;
+			else
+				*fpOut=fopen(filetxt,"w+b");
 			*fpIn=fopen(filecodificado ,"rb");
 			if( *fpOut == NULL || *fpIn == NULL )
 				return ARCHIVOINEXISTENTE ;
