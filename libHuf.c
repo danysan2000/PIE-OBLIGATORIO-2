@@ -9,9 +9,11 @@
 #include <libHuf.h>
 
 
-uint32_t to_big_endian(uint32_t value);
+static uint32_t to_big_endian(uint32_t value);
 
 /* struct auxliar Procesamiento record para Codificar y Decodificar */
+/* No utilizado */
+/* ( para version 2.0 ) */
 typedef unsigned int bittypes;
 union  CodEncod {
 	bittypes regA; /* 32 bits */
@@ -71,7 +73,6 @@ CodigoError codificarConTabla(FILE *fpIn, FILE *fpOut, simbolo *tablaCod, int nb
 		unsigned int codigo;
 	} MAQTAB; /* struct especial para codificacion */
 	MAQTAB *maqtab ; /* struct array donde el indicie es el valor char del texto a codificar */
-
 
 	if ( (err = leerArchivotxt( fpIn,  &Msj, &nbM) ) != TODOOK ) return err;
 
@@ -229,7 +230,6 @@ CodigoError decodificarConTabla(FILE* fpIn, FILE* fpOut, simbolo *Tabla, int NbS
 		aux_nbits = Tabla[ind_tab].nbits; /* tomo los nbits del codigo encontrado */
 		curBit += aux_nbits; /*  aux_nbits para el proximo codigo */
 
-/*		if ( curBit > 8 ) esto no es mas necesario */
 		/* calcular ptr y CurBit  */
 		/* ajustar col dependiendo si hay o no cambio de renglon */ 
 		col  =  ( curBit % 8);                   /* columna dentro del byte */
@@ -311,7 +311,7 @@ void liberarTabla()
 }
 
 
-uint32_t to_big_endian(uint32_t value) 
+static uint32_t to_big_endian(uint32_t value) 
 {
     uint32_t result = 0;
     result |= (value & 0xFF000000) >> 24;  /* Byte 3 (MSB) -> Byte 0 */

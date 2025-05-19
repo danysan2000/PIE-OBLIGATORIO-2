@@ -1,8 +1,9 @@
 # Makefile  obligatorio-2
 #
 
+ARCHIVOS_ENTREGAR= obligatorio2.c bits.c bits.h libHuf.c libHuf.h Makefile
 
-all : libbits.a libHuf.a obligatorio2 
+all : libbits.a libHuf.a obligatorio2 entrega
 
 COPT = -I./ -Wall -ansi -ggdb
 LDFLAGS = -L ./
@@ -25,5 +26,7 @@ libHuf.a: libHuf.o
 clean:
 	rm - rf *.o obligatorio2 libbits.a libHuf.a
 
-
+entrega: obligatorio2 bits.o  libHuf.o
+	zip  alberto_DANIEL_SANCHEZ_LATRONICO.zip   $(ARCHIVOS_ENTREGAR)
+	touch entrega
 
