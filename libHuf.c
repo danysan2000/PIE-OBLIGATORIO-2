@@ -39,7 +39,7 @@ CodigoError leertablacodificaciontxt(FILE *fpTdC, simbolo **tablaCod, int* nbS)
 	fscanf(fpTdC, "%d", nbS);
 	*tablaCod = malloc( (sizeof(simbolo) * *nbS) );
 
-	if (*tablaCod == NULL) return ERRORMEMORIA;
+	if (*tablaCod == NULL) return ERROR_MEMORIA;
 	
 	for( ix=0; ix < *nbS ; ix++)
 	{
@@ -47,16 +47,16 @@ CodigoError leertablacodificaciontxt(FILE *fpTdC, simbolo **tablaCod, int* nbS)
 	(unsigned int*) &( (*tablaCod)[ix].valor),
 					&( (*tablaCod)[ix].nbits),
 					&( (*tablaCod)[ix].codigo) );
-		if( err == EOF ) return ERRORLECTURA;
+		if( err == EOF ) return ERROR_LECTURA;
 	}
-	return TODOOK;
+	return TODO_OK;
 }
 
 
 CodigoError codificarConTabla(FILE *fpIn, FILE *fpOut, simbolo *tablaCod, int nbS)
 {
 	/* INIT variables */
-	CodigoError ret = TODOOK;
+	CodigoError ret = TODO_OK;
 
 	unsigned  char *Msj, aux_char;
 	int nbM, curs_nbm, err;
@@ -74,12 +74,13 @@ CodigoError codificarConTabla(FILE *fpIn, FILE *fpOut, simbolo *tablaCod, int nb
 	} MAQTAB; /* struct especial para codificacion */
 	MAQTAB *maqtab ; /* struct array donde el indicie es el valor char del texto a codificar */
 
-	if ( (err = leerArchivotxt( fpIn,  &Msj, &nbM) ) != TODOOK ) return err;
+	if ( (err = leerArchivotxt( fpIn,  &Msj, &nbM) ) != TODO_OK ) return err;
 
 	/* Inicializo MaqCodec */
 		/* desde tablaCod genero una nueva structura array */
-	maqtab = malloc( nbS * sizeof( MAQTAB ) );
-	if( maqtab == NULL ) return ERRORMEMORIA;
+	/* maqtab = malloc( nbS * sizeof( MAQTAB ) ); */
+	maqtab = malloc( 256 * sizeof( MAQTAB ) );
+	if( maqtab == NULL ) return ERROR_MEMORIA;
 
 	for(ix=0; ix < nbS ; ix++)
 	{
@@ -175,13 +176,13 @@ CodigoError codificarConTabla(FILE *fpIn, FILE *fpOut, simbolo *tablaCod, int nb
 
 CodigoError leerArchivotxt(FILE* fpIn, unsigned char **Msj, int* nbM)
 {
-	CodigoError ret = TODOOK;
+	CodigoError ret = TODO_OK;
 	/* calculo la longitud del archivo */
 	 fseek( fpIn, (long ) 0, SEEK_END ); /* final del archivo */
 	 *nbM = ftell(fpIn);
 	 fseek( fpIn, (long ) 0, SEEK_SET ); /* comienzo del archivo */
 
-	 if( *nbM == 0 ) return ERRORLECTURA;
+	 if( *nbM == 0 ) return ERROR_LECTURA;
 	/* pido Memoria */
 	 /* por un tema de compatibilidad con decodificarconTabla le sumo al buffer Msj para que sea
 	  * multiplo  de 4 sin cambiar nbM */
@@ -191,13 +192,13 @@ CodigoError leerArchivotxt(FILE* fpIn, unsigned char **Msj, int* nbM)
 	 else
 		*Msj = calloc( *nbM, 1 );
 	/* asigno el contenido del archivo a Msj */
-	if (  fread( *Msj, 1, *nbM , fpIn) != *nbM ) return ERRORLECTURA;
+	if (  fread( *Msj, 1, *nbM , fpIn) != *nbM ) return ERROR_LECTURA;
 	return ret;
 }
 
 CodigoError decodificarConTabla(FILE* fpIn, FILE* fpOut, simbolo *Tabla, int NbS)
 {
-	CodigoError ret = TODOOK;
+	CodigoError ret = TODO_OK;
 	int curBit;
 	unsigned int aux_nbits, col, ren;
 	int ind_tab;
@@ -207,15 +208,14 @@ CodigoError decodificarConTabla(FILE* fpIn, FILE* fpOut, simbolo *Tabla, int NbS
 	unsigned int ptr;
 	unsigned int aux_codigo,aux_codigo2;
 
-	if ( (err = leerArchivotxt( fpIn,  &MsjCod, &nbM) ) != TODOOK ) return err;
+	if ( (err = leerArchivotxt( fpIn,  &MsjCod, &nbM) ) != TODO_OK ) return err;
 	curBit = 0;
 	ptr = 1;
 	do
 	{
-		 aux_codigo  = to_big_endian( (unsigned int) *((unsigned int*)(MsjCod+ptr)) );
-		 aux_codigo2 = extraer( aux_codigo , 0, 31-curBit) << curBit;
-		/* ind_tab = indiceEnTabla( extraer( to_big_endian( (unsigned int) *((unsigned int*)(MsjCod+ptr)) ) , 0, 31-curBit), NULL  , Tabla, NbS); */
-		ind_tab = indiceEnTabla( aux_codigo2, NULL, Tabla, NbS);
+		aux_codigo  = to_big_endian( (unsigned int) *((unsigned int*)(MsjCod+ptr)) );
+		aux_codigo2 = extraer( aux_codigo , 0, 31-curBit) << curBit;
+		ind_tab = indiceEnTabla( aux_codigo2, -1 , Tabla, NbS);
 		if ( ind_tab < 0 ) /* ERROR no encontro el codigo */
 		{
 			ret = ERRORCODIGONOEXISTE;
@@ -240,9 +240,76 @@ CodigoError decodificarConTabla(FILE* fpIn, FILE* fpOut, simbolo *Tabla, int NbS
 			curBit = col; 
 			ptr   += ren;           /* ptr como renglon es el indice de MsjCod */
 		}			
-	} while(  ptr < nbM-1 && ( ret == TODOOK ) );
+	} while(  ptr < nbM-1 && ( ret == TODO_OK ) );
 	return ret;
 }
+
+
+/*
+  funcion original 
+  int indiceEnTabla(unsigned int codigo, int nbits, simbolo *tablaCod, int NbS)
+  DAN int indiceEnTabla(unsigned int codigo, simbolo *tablaCod, int NbS)
+*/
+int indiceEnTabla(unsigned int codigo, int nbits, simbolo *tablaCod, int NbS)
+{
+	/* hay que buscar el codigo y nbits */
+	int valret = -1;
+	int ix; /* auxiliares para loops */
+	unsigned int aux_codigo, aux_codigoTab;
+	int aux_nbits;
+	unsigned int mask; /* mascara para testear segun nbits con codigo */
+
+	/*
+	 Debido a un tema de la Letra del Obligatorio
+	 diseño ESTA FUNCION INTERNAMENTE DE DOS MANERAS
+	 	[1] PARA GREGORY
+	 	[2] PARA LA FUNCION REAL.
+
+	   si nbits es positivo [1]
+	   else [2].
+	   Para [2] como no puedo definir nbits como puntero tengo que tomar la informacion desde la tabla.
+	*/
+
+	if( nbits > 0 ) /* Forma [1] donde nbits viene como datos y hay que responder si para el codigo
+					  con nbits existe en la tabla
+					*/
+	{
+		ix = NbS;
+		do {
+			aux_nbits     = tablaCod[ix].nbits;
+			aux_codigoTab = tablaCod[ix].codigo;
+			mask          = crear_mascara( 31, 32-aux_nbits ); /* verificar  */
+			aux_codigo    = extraer( (codigo & mask ),32-aux_nbits , 31);
+
+		} while( ix-- || aux_codigo != aux_codigoTab  );
+		valret = ( aux_codigo != aux_codigoTab ) ? -1 : ix ; 
+	}
+	else
+	{
+		/* primer intento busco en la tabla sin considerar el orden de los nbits pero comienzo por abajo */
+		ix= NbS-1;
+		aux_nbits = -1; /* inicio aux_nbits */
+		do 
+		{
+			/* leo el indice ix de la tabla */
+			aux_codigoTab = tablaCod[ix].codigo;
+			/* aux_valor  = tablaCod[ix].valor; */
+			/* armo la mascara para los nbits correspondientes */
+			if ( aux_nbits !=  tablaCod[ix].nbits )
+			{
+				aux_nbits   = tablaCod[ix].nbits;
+				mask        = crear_mascara( 31, 32-aux_nbits ); /* verificar  */
+				aux_codigo  = extraer( (codigo & mask ),32-aux_nbits , 31);
+
+			}
+			/* comparo con codigo */
+			 if( aux_codigoTab == aux_codigo ) 
+				valret = ix ; /* lo encontro */
+		} while( valret == -1  && ix--  );
+	}
+	return valret;
+}
+
 
 
 /* por ahora no le encuentro sentido a esta funcion,
@@ -257,6 +324,9 @@ CodigoError decodificarConTabla(FILE* fpIn, FILE* fpOut, simbolo *Tabla, int NbS
   int indiceEnTabla(unsigned int codigo, int *nbits, simbolo *tablaCod, int NbS)
 DAN int indiceEnTabla(unsigned int codigo, simbolo *tablaCod, int NbS)
 */
+
+#if 0
+
 int indiceEnTabla(unsigned int codigo, int *nbits, simbolo *tablaCod, int NbS)
 {
 	
@@ -288,10 +358,13 @@ int indiceEnTabla(unsigned int codigo, int *nbits, simbolo *tablaCod, int NbS)
 	return valret;
 }
 
+#endif
+
+
 
 CodigoError salvar_codigos(simbolo *TablaCod, int NbS, FILE* out)
 {
-	CodigoError ret = TODOOK;
+	CodigoError ret = TODO_OK;
 	int ix;
 	fprintf(out,"%03d\n",NbS);
 	for(ix=0; ix<NbS ; ix++)

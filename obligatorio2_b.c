@@ -25,7 +25,7 @@ int main(int argc , char **argv )
 	char op;
 	int nbS, errArg;
 	/* procesar argumentos */
-	if( (errArg=argumentos1(argc , argv, &op, &fpIn, &fpOut, &fpTdC)) != TODOOK )
+	if( (errArg=argumentos1(argc , argv, &op, &fpIn, &fpOut, &fpTdC)) != TODO_OK )
 	{
 		printf("Error en argumentos:\n"
                 "    Use: obligatorio2 comando archivo1.[txt][cod] archivo2.[cod][txt] archivo3.[codigos]\n"
@@ -38,17 +38,36 @@ int main(int argc , char **argv )
 	switch ( op )
 	{
 		case 'C':
-			if ( codificarConTabla(  fpIn, fpOut, TablaCod, nbS) != TODOOK )
+			if ( codificarConTabla(  fpIn, fpOut, TablaCod, nbS) != TODO_OK )
 				printf("Error en CODIFICAR\n");
 			break;
 		case 'D':
-			if ( decodificarConTabla( fpIn, fpOut, TablaCod, nbS) != TODOOK )
+			if ( decodificarConTabla( fpIn, fpOut, TablaCod, nbS) != TODO_OK )
 				printf("Error en DECODIFICAR\n");
 			break;
 		case 'T':
 			/* leertablacodificaciontxt(fpTdC, &TablaCod,  &nbS); */
 			salvar_codigos(TablaCod, nbS,  fpOut);
 			break;
+
+		case 'P': /* prueba de indiceEntabla  */
+			{
+				int nbS;
+				int codigo = 0xe26e27b3;
+				int nbits  = 4;
+				leertablacodificaciontxt(fpTdC,  &TablaCod, &nbS) ;
+				if( indiceEnTabla(codigo, nbits, TablaCod, nbS) > -1 )
+					printf( " OK ");
+				else
+					printf( " NO ESTA ");
+				codigo = 0x926e27b3; 
+				nbits  = 4;
+				leertablacodificaciontxt(fpTdC,  &TablaCod,  &nbS) ;
+				if( indiceEnTabla(codigo, nbits, TablaCod, nbS) > -1 )
+					printf( " OK ");
+				else
+					printf( " NO ESTA ");
+			}
 	}
 	
 return 0;
@@ -58,43 +77,38 @@ return 0;
 CodigoError argumentos1(int argc , char **argv, char *op, FILE **fpIn, FILE **fpOut, FILE **fpTdC )
 {
 	/* Analizo argumentos y abro archivos */
-	char fileCodigos[100], filetxt[100], filecodificado[100];
 
 	if(  argc < 5 ) return ERRORARGUMENTOS;
 	*op =  *argv[1];  /* comando */
-	if( *op != 'C' && *op != 'D' && *op != 'T' ) return ERRORARGUMENTOS;
-	strcpy( fileCodigos,argv[4]); /* file Codigos */
-	if (  (*fpTdC = fopen( fileCodigos,"rb")) == NULL ) return ARCHIVOINEXISTENTE;
+	if( *op != 'C' && *op != 'D' && *op != 'T' && *op != 'P' ) return ERRORARGUMENTOS;
+	if (  (*fpTdC = fopen( argv[4],"rb")) == NULL ) return ARCHIVO_INEXISTENTE;
 	switch((int)*op)
 	{
 		case 'C':
-			strcpy( filetxt, argv[2]); /* file in "nombreArchivo.txt */
-			strcpy( filecodificado,argv[3]); /* file out"ArchivoCodificado */
-			*fpIn=fopen(filetxt, "rb");
-			*fpOut=fopen(filecodificado,"w+b");
+			*fpIn=fopen(argv[2], "rb");
+			*fpOut=fopen(argv[3],"w+b");
 			if( *fpIn==NULL || *fpOut==NULL )
-			   	return ARCHIVOINEXISTENTE;
+			   	return ARCHIVO_INEXISTENTE;
 			break;
 		case 'D':
-			strcpy( filecodificado, argv[2]); /* file in "ArchivoCodificado */
-			strcpy( filetxt,argv[3]); /* file out "ArchivoDecodificado.txt */
-			if( !strcmp( filetxt, "stdout") )
+			if( !strcmp( argv[3], "stdout") )
 				*fpOut = stdout;
 			else
-				*fpOut=fopen(filetxt,"w+b");
-			*fpIn=fopen(filecodificado ,"rb");
+				*fpOut=fopen(argv[3],"w+b");
+			*fpIn=fopen(argv[2] ,"rb");
 			if( *fpOut == NULL || *fpIn == NULL )
-				return ARCHIVOINEXISTENTE ;
+				return ARCHIVO_INEXISTENTE ;
 			break;
+
 		case 'T': /* segun letra se ignoran los archivos, pero el de salida seria donde se imprimen */
-			strcpy( filetxt,argv[2]); /* file out "ArchivoDecodificado.txt */
-			if( !strcmp( filetxt, "stdout") )
+		case 'P':
+			if( !strcmp( argv[2], "stdout") )
 				*fpOut = stdout;
 			else
 			{
-				*fpOut=fopen(filetxt,"w+b");
+				*fpOut=fopen(argv[2],"w+b");
 				if( *fpOut ==NULL )
-					return ARCHIVOINEXISTENTE ;
+					return ARCHIVO_INEXISTENTE ;
 			}
 			break;
 
@@ -102,7 +116,7 @@ CodigoError argumentos1(int argc , char **argv, char *op, FILE **fpIn, FILE **fp
 			return ERRORARGUMENTOS; /* error en argumentos */
 	}
 	
-	return TODOOK;
+	return TODO_OK;
 }
 
 
