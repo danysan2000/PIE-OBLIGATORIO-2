@@ -72,7 +72,7 @@ CodigoError codificarConTabla(FILE *fpIn, FILE *fpOut, simbolo *tablaCod, int nb
 		int nbits;
 		unsigned int codigo;
 	} MAQTAB; /* struct especial para codificacion */
-	MAQTAB *maqtab ; /* struct array donde el indicie es el valor char del texto a codificar */
+	MAQTAB *maqtab ; /* struct array donde el indice es el valor char del texto a codificar */
 
 	if ( (err = leerArchivotxt( fpIn,  &Msj, &nbM) ) != TODO_OK ) return err;
 
@@ -160,7 +160,8 @@ CodigoError codificarConTabla(FILE *fpIn, FILE *fpOut, simbolo *tablaCod, int nb
 				col = curBit % 8;  /* para saber cuantos zeros para completar el byte (fill) */
 				reng =  ( curBit - col ) / 8; /* para saber cual de los 4 bytes estoy */
 				NbStuff =  7 - col; /*ceros para completar */
-				*buf2 = to_big_endian( (uint32_t) *buf2 ); /* problema de endianness */
+				*buf2 =   *buf2 << NbStuff;
+				*buf2 = to_big_endian( (uint32_t) *buf2 );/* problema de endianness */
 				fwrite ( buff_work , 1 , ( curs_buf*4)+reng+1 , fpOut );
 			}
 			fseek( fpOut, 0,0);
@@ -198,6 +199,11 @@ CodigoError leerArchivotxt(FILE* fpIn, unsigned char **Msj, int* nbM)
 
 CodigoError decodificarConTabla(FILE* fpIn, FILE* fpOut, simbolo *Tabla, int NbS)
 {
+	/*
+	 * TODO ESTE CODIGO SE REEMPLAZA POR crear_arbol tomando Tabla
+	 *  Y RECORRIENDO EL ARBOL PARA DECODIFICAR.
+	 *
+	 */
 	CodigoError ret = TODO_OK;
 	int curBit;
 	unsigned int aux_nbits, col, ren;
@@ -207,10 +213,12 @@ CodigoError decodificarConTabla(FILE* fpIn, FILE* fpOut, simbolo *Tabla, int NbS
 	int nbM, err;
 	unsigned int ptr;
 	unsigned int aux_codigo,aux_codigo2;
+	unsigned char NbStuff = 0; /* variable para indicar la cantidad de ceros de relleno */
 
 	if ( (err = leerArchivotxt( fpIn,  &MsjCod, &nbM) ) != TODO_OK ) return err;
-	curBit = 0;
-	ptr = 1;
+	curBit		= 0;
+	ptr			= 1;
+	NbStuff		= *MsjCod;
 	do
 	{
 		aux_codigo  = to_big_endian( (unsigned int) *((unsigned int*)(MsjCod+ptr)) );
@@ -240,7 +248,9 @@ CodigoError decodificarConTabla(FILE* fpIn, FILE* fpOut, simbolo *Tabla, int NbS
 			curBit = col; 
 			ptr   += ren;           /* ptr como renglon es el indice de MsjCod */
 		}			
-	} while(  ptr < nbM-1 && ( ret == TODO_OK ) );
+	} while( ( ptr <  nbM-1 || ( ptr == nbM-1  &&  curBit == 8-NbStuff ) ) && ( ret == TODO_OK ) );
+	                    /***   ^---- TREMENDA PORQUERIA ----^ */
+   	/* ALERTA: Tengo que considerar si finaliza dentro del byte. */
 	return ret;
 }
 
