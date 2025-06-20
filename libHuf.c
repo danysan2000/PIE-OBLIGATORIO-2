@@ -11,26 +11,6 @@
 
 static uint32_t to_big_endian(uint32_t value);
 
-/* struct auxliar Procesamiento record para Codificar y Decodificar */
-/* No utilizado */
-/* ( para version 2.0 ) */
-typedef unsigned int bittypes;
-union  CodEncod {
-	bittypes regA; /* 32 bits */
-	struct { bittypes b3:  3 ; } b03;
-	struct { bittypes b4:  4 ; } b04;
-	struct { bittypes b5:  5 ; } b05;
-	struct { bittypes b6:  6 ; } b06;
-	struct { bittypes b7:  7 ; } b07;
-	struct { bittypes b8:  8 ; } b08;
-	struct { bittypes b9:  9 ; } b09;
-	struct { bittypes b10: 10; } b10;
-	struct { bittypes b11: 11; } b11;
-	struct { bittypes b12: 12; } b12;
-	struct { bittypes b13: 13; } b13;
-	struct { bittypes gap: 19; } gap;
-};
-
 
 CodigoError leertablacodificaciontxt(FILE *fpTdC, simbolo **tablaCod, int* nbS) 
 {
@@ -248,12 +228,20 @@ CodigoError decodificarConTabla(FILE* fpIn, FILE* fpOut, simbolo *Tabla, int NbS
 			curBit = col; 
 			ptr   += ren;           /* ptr como renglon es el indice de MsjCod */
 		}			
-	} while( ( ptr <  nbM-1 || ( ptr == nbM-1  &&  curBit == 8-NbStuff ) ) && ( ret == TODO_OK ) );
+	} while( ( ptr <  nbM-1 || ( ptr == nbM-1  &&  curBit == 7-NbStuff ) ) && ( ret == TODO_OK ) );
 	                    /***   ^---- TREMENDA PORQUERIA ----^ */
    	/* ALERTA: Tengo que considerar si finaliza dentro del byte. */
 	return ret;
 }
 
+
+/* por ahora no le encuentro sentido a esta funcion,
+ * ya que nbits no lo tengo como dato sino lo tengo que buscar dentro de la tabla
+ * comenzando de menor a mayor.
+ *
+ * PASO COMO PUNTERO nbits , para que la funcion me diga cuantos nbits tiene el codigo buscado 
+ * return: -1 si no lo encuentra.
+ */
 
 /*
   funcion original 
@@ -319,57 +307,6 @@ int indiceEnTabla(unsigned int codigo, int nbits, simbolo *tablaCod, int NbS)
 	}
 	return valret;
 }
-
-
-
-/* por ahora no le encuentro sentido a esta funcion,
- * ya que nbits no lo tengo como dato sino lo tengo que buscar dentro de la tabla
- * comenzando de menor a mayor.
- *
- * PASO COMO PUNTERO nbits , para que la funcion me diga cuantos nbits tiene el codigo buscado 
- * return: -1 si no lo encuentra.
- */
-/*
- * funcion original 
-  int indiceEnTabla(unsigned int codigo, int *nbits, simbolo *tablaCod, int NbS)
-DAN int indiceEnTabla(unsigned int codigo, simbolo *tablaCod, int NbS)
-*/
-
-#if 0
-
-int indiceEnTabla(unsigned int codigo, int *nbits, simbolo *tablaCod, int NbS)
-{
-	
-	int valret = -1;
-	int ix; /* auxiliares para loops */
-	unsigned int aux_codigo, aux_codigoTab;
-	int aux_nbits;
-	unsigned int mask; /* mascara para testear segun nbits con codigo */
-	/* primer intento busco en la tabla sin considerar el orden de los nbits pero comienzo por abajo */
-	ix= NbS-1;
-	aux_nbits = -1; /* inicio aux_nbits */
-	do 
-	{
-		/* leo el indice ix de la tabla */
-		aux_codigoTab = tablaCod[ix].codigo;
-		/* aux_valor  = tablaCod[ix].valor; */
-		/* armo la mascara para los nbits correspondientes */
-		if ( aux_nbits !=  tablaCod[ix].nbits )
-		{
-			aux_nbits   = tablaCod[ix].nbits;
-			mask        = crear_mascara( 31, 32-aux_nbits ); /* verificar  */
-			aux_codigo  = extraer( (codigo & mask ),32-aux_nbits , 31);
-
-		}
-		/* comparo con codigo */
-		 if( aux_codigoTab == aux_codigo ) 
-			valret = ix ; /* lo encontro */
-	} while( valret == -1  && ix--  );
-	return valret;
-}
-
-#endif
-
 
 
 CodigoError salvar_codigos(simbolo *TablaCod, int NbS, FILE* out)
